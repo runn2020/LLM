@@ -45,14 +45,22 @@ def get_qa_history_chain():
         condense_question_prompt | llm | StrOutputParser() | retriever,
     )
 
+    # system_prompt = (
+    #     "你是一个问答任务的助手。 "
+    #     "请使用检索到的上下文片段回答这个问题。 "
+    #     "如果你不知道答案就说不知道。 "
+    #     "请使用简洁的话语回答用户。"
+    #     "\n\n"
+    #     "{context}"
+    # )
     system_prompt = (
-        "你是一个问答任务的助手。 "
-        "请使用检索到的上下文片段回答这个问题。 "
-        "如果你不知道答案就说不知道。 "
-        "请使用简洁的话语回答用户。"
-        "\n\n"
-        "{context}"
-    )
+    "你是一个问答任务的助手。"
+    "请优先使用检索到的上下文片段回答问题。"
+    "如果检索到的上下文为空或不足以回答问题，请基于你的通用知识回答。"
+    "保持回答简洁明了。"
+    "\n\n"
+    "{context}"
+)
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
