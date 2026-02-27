@@ -211,7 +211,7 @@ def gen_response(chain, input_text, chat_history, model_name, temperature, max_t
 # ---------- Streamlit UI ----------
 def main():
     st.set_page_config(page_title="RAG Chat with Upload", layout="wide")
-    st.title("🔎 RAG 问答 — 带参数 & 本地文档上传")
+    st.title("🔎 检索增强的个人知识库助手")
 
     # 左侧：参数与上传
     with st.sidebar:
@@ -307,3 +307,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
