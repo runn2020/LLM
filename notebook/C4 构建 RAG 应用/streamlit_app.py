@@ -82,47 +82,103 @@ def gen_response(chain, input, chat_history):
             yield res["answer"]
 
 # Streamlit 应用程序界面
+# def main():
+#     st.markdown('### 🦜🔗 AI Agent: 检索增强的个人知识库助手 🦜🔗 ###')
+
+#     # 用于跟踪对话历史
+#     if "messages" not in st.session_state:
+#         st.session_state.messages = []
+#     # 存储检索问答链
+#     if "qa_history_chain" not in st.session_state:
+#         st.session_state.qa_history_chain = get_qa_history_chain()
+#     messages = st.container(height=550)
+#     # 显示整个对话历史
+#     for message in st.session_state.messages:
+#             with messages.chat_message(message[0]):
+#                 st.write(message[1])
+#     if prompt := st.chat_input("Say something"):
+#         # 将用户输入添加到对话历史中
+#         st.session_state.messages.append(("human", prompt))
+#         with messages.chat_message("human"):
+#             st.write(prompt)
+
+#         answer = gen_response(
+#             chain=st.session_state.qa_history_chain,
+#             input=prompt,
+#             chat_history=st.session_state.messages
+#         )
+#         # with messages.chat_message("ai"):
+#         #     output = st.write_stream(answer)
+#         # st.session_state.messages.append(("ai", output))
+#         with messages.chat_message("ai"):
+#             output_chunks = []
+#             try:
+#                 for chunk in answer:
+#                     st.write(chunk)  # 移除 end=""
+#                     output_chunks.append(chunk)
+#                 output = "".join(output_chunks)
+#                 status_msg = "✅ ZhipuAI API 调用成功"
+#             except Exception as e:
+#                 output = ""
+#                 status_msg = f"❌ ZhipuAI API 调用失败: {e}"
+#             st.write(status_msg)
+#         st.session_state.messages.append(("ai", output or status_msg))
 def main():
     st.markdown('### 🦜🔗 AI Agent: 检索增强的个人知识库助手 🦜🔗 ###')
 
-    # 用于跟踪对话历史
+    # 初始化会话
     if "messages" not in st.session_state:
         st.session_state.messages = []
-    # 存储检索问答链
+
     if "qa_history_chain" not in st.session_state:
         st.session_state.qa_history_chain = get_qa_history_chain()
-    messages = st.container(height=550)
-    # 显示整个对话历史
-    for message in st.session_state.messages:
-            with messages.chat_message(message[0]):
-                st.write(message[1])
+
+    messages_container = st.container(height=550)
+
+    # 显示历史消息
+    for role, content in st.session_state.messages:
+        with messages_container.chat_message(role):
+            st.write(content)
+
+    # 用户输入
     if prompt := st.chat_input("Say something"):
-        # 将用户输入添加到对话历史中
-        st.session_state.messages.append(("human", prompt))
-        with messages.chat_message("human"):
+
+        # 先显示用户问题
+        with messages_container.chat_message("human"):
             st.write(prompt)
 
-        answer = gen_response(
+        # ⚠️ 构造 history（不包含当前问题）
+        chat_history = st.session_state.messages.copy()
+
+        # 调用生成器
+        answer_generator = gen_response(
             chain=st.session_state.qa_history_chain,
             input=prompt,
-            chat_history=st.session_state.messages
+            chat_history=chat_history
         )
-        # with messages.chat_message("ai"):
-        #     output = st.write_stream(answer)
-        # st.session_state.messages.append(("ai", output))
-        with messages.chat_message("ai"):
+
+        # 显示 AI 回复（流式）
+        with messages_container.chat_message("ai"):
+            placeholder = st.empty()
             output_chunks = []
+
             try:
-                for chunk in answer:
-                    st.write(chunk)  # 移除 end=""
+                for chunk in answer_generator:
                     output_chunks.append(chunk)
+                    placeholder.markdown("".join(output_chunks))
                 output = "".join(output_chunks)
                 status_msg = "✅ ZhipuAI API 调用成功"
+
             except Exception as e:
                 output = ""
                 status_msg = f"❌ ZhipuAI API 调用失败: {e}"
-            st.write(status_msg)
-        st.session_state.messages.append(("ai", output or status_msg))
+                placeholder.markdown(status_msg)
+
+            st.caption(status_msg)
+
+        # ⚠️ 最后再存入 session_state
+        st.session_state.messages.append(("human", prompt))
+        st.session_state.messages.append(("ai", output))
 
 if __name__ == "__main__":
     main()
