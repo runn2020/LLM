@@ -96,23 +96,23 @@ def rebuild_vector_index(embedding):
         return None
 
 # ---------- 获取检索器 ----------
-def get_retriever(force_reload=False):
+def get_retriever():
     embedding = ZhipuAIEmbeddings()
-    # 如果请求强制重建或索引不存在，则尝试从 DOCS_DIR 重建
-    if force_reload or not os.path.exists(os.path.join(PERSIST_DIR, "index.sqlite")):
-        vectordb = rebuild_vector_index(embedding)
-        if vectordb is None:
-            # 没有可用的向量库，返回一个“空”的可调用 retriever（兼容接口）
-            class DummyRetriever:
-                def get_relevant_documents(self, q):
-                    return []
-                def as_retriever(self):
-                    return self
-            return DummyRetriever()
+
+    try:
+        vectordb = Chroma(
+            persist_directory=PERSIST_DIR,
+            embedding_function=embedding
+        )
         return vectordb.as_retriever()
-    else:
-        # 加载已有数据库
-        vectordb = Chroma(persist_directory=PERSIST_DIR, embedding_function=embedding)
+    except Exception:
+        # 如果加载失败，重新创建
+        vectordb = Chroma.from_texts(
+            texts=["初始化文档"],
+            embedding=embedding,
+            persist_directory=PERSIST_DIR,
+        )
+        vectordb.persist()
         return vectordb.as_retriever()
 
 # ---------- combine_docs（与你原始的保持一致） ----------
@@ -213,7 +213,7 @@ def gen_response(chain, input_text, chat_history, model_name, temperature, max_t
 # ---------- Streamlit UI ----------
 def main():
     st.set_page_config(page_title="RAG Chat with Upload", layout="wide")
-    st.title("🔎 检索增强的个人知识库助手 🔎")
+    st.title("🔎 检索增强的个人知识库助手 🦜")
 
     # 左侧：参数与上传
     with st.sidebar:
@@ -235,7 +235,7 @@ def main():
                 st.success(f"已保存: {up.name}")
             st.info("上传完毕，请点击下方“重建索引”以把新文档加入检索库。")
 
-        force_rebuild = st.button("🔁 重建索引（从 data_base/docs/ 重建，会覆盖原索引）")
+        force_rebuild = st.button("🔁 重建索引 更新检索库")
         if force_rebuild:
             with st.spinner("正在重建索引..."):
                 emb = ZhipuAIEmbeddings()
@@ -245,8 +245,6 @@ def main():
                 else:
                     st.warning("索引目录中没有有效文档，未生成索引。")
 
-        st.markdown("---")
-        st.caption("请将 API key 放在 Streamlit Secrets：ZHIPUAI_API_KEY")
 
     # 中央：对话区
     if "messages" not in st.session_state:
