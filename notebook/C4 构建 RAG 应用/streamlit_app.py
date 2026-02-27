@@ -83,7 +83,7 @@ def gen_response(chain, input, chat_history):
 
 # Streamlit 应用程序界面
 def main():
-    st.markdown('### 🦜🔗 AI Agent: 检索增强的个人知识库助手 🔗🦜 ###')
+    st.markdown('### 🦜🔗 AI Agent: 检索增强的个人知识库助手 🦜🔗 ###')
 
     # 用于跟踪对话历史
     if "messages" not in st.session_state:
@@ -114,7 +114,7 @@ def main():
             output_chunks = []
             try:
                 for chunk in answer:
-                    st.write(chunk, end="")
+                    st.write(chunk)  # 移除 end=""
                     output_chunks.append(chunk)
                 output = "".join(output_chunks)
                 status_msg = "✅ ZhipuAI API 调用成功"
