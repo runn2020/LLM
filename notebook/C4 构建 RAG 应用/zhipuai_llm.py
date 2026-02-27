@@ -69,60 +69,6 @@ class ZhipuaiLLM(BaseChatModel):
         generation = ChatGeneration(message=message)
         return ChatResult(generations=[generation])
 
-    # def _stream(
-    #     self,
-    #     messages: List[BaseMessage],
-    #     stop: Optional[List[str]] = None,
-    #     run_manager: Optional[CallbackManagerForLLMRun] = None,
-    #     **kwargs: Any,
-    # ) -> Iterator[ChatGenerationChunk]:
-    #     """通过调用智谱API返回流式输出。
-
-    #     Args:
-    #         messages: 由messages列表组成的prompt
-    #         stop: 在模型生成的回答中有该字符串列表中的元素则停止响应
-    #         run_manager: 一个为LLM提供回调的运行管理器
-    #     """
-    #     messages = [_convert_message_to_dict(message) for message in messages]
-    #     response = ZhipuAI().chat.completions.create(
-    #         model=self.model_name,
-    #         stream=True,
-    #         temperature=self.temperature,
-    #         max_tokens=self.max_tokens,
-    #         timeout=self.timeout,
-    #         stop=stop,
-    #         messages=messages
-    #     )
-    #     start_time = time.time()
-    #     for res in response:
-    #         if res.usage:
-    #             usage_metadata = UsageMetadata(
-    #                 {
-    #                     "input_tokens": res.usage.prompt_tokens,
-    #                     "output_tokens": res.usage.completion_tokens,
-    #                     "total_tokens": res.usage.total_tokens,
-    #                 }
-    #             )
-    #         chunk = ChatGenerationChunk(
-    #             message=AIMessageChunk(content=res.choices[0].delta.content)
-    #         )
-
-    #         if run_manager:
-    #             # This is optional in newer versions of LangChain
-    #             # The on_llm_new_token will be called automatically
-    #             run_manager.on_llm_new_token(res.choices[0].delta.content, chunk=chunk)
-
-    #         yield chunk
-    #     time_in_sec = time.time() - start_time
-    #     # Let's add some other information (e.g., response metadata)
-    #     chunk = ChatGenerationChunk(
-    #         message=AIMessageChunk(content="", response_metadata={"time_in_sec": round(time_in_sec, 3)}, usage_metadata=usage_metadata)
-    #     )
-    #     if run_manager:
-    #         # This is optional in newer versions of LangChain
-    #         # The on_llm_new_token will be called automatically
-    #         run_manager.on_llm_new_token("", chunk=chunk)
-    #     yield chunk
     def _stream(
         self,
         messages: List[BaseMessage],
@@ -130,6 +76,13 @@ class ZhipuaiLLM(BaseChatModel):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
+        """通过调用智谱API返回流式输出。
+
+        Args:
+            messages: 由messages列表组成的prompt
+            stop: 在模型生成的回答中有该字符串列表中的元素则停止响应
+            run_manager: 一个为LLM提供回调的运行管理器
+        """
         messages = [_convert_message_to_dict(message) for message in messages]
         response = ZhipuAI().chat.completions.create(
             model=self.model_name,
@@ -141,7 +94,6 @@ class ZhipuaiLLM(BaseChatModel):
             messages=messages
         )
         start_time = time.time()
-        usage_metadata = None
         for res in response:
             if res.usage:
                 usage_metadata = UsageMetadata(
@@ -151,16 +103,27 @@ class ZhipuaiLLM(BaseChatModel):
                         "total_tokens": res.usage.total_tokens,
                     }
                 )
-            # 获取content，若为None则替换为空字符串
-            content = res.choices[0].delta.content or ""
             chunk = ChatGenerationChunk(
-                message=AIMessageChunk(content=content)
+                message=AIMessageChunk(content=res.choices[0].delta.content)
             )
-    
+
             if run_manager:
-                run_manager.on_llm_new_token(content, chunk=chunk)
-    
+                # This is optional in newer versions of LangChain
+                # The on_llm_new_token will be called automatically
+                run_manager.on_llm_new_token(res.choices[0].delta.content, chunk=chunk)
+
             yield chunk
+        time_in_sec = time.time() - start_time
+        # Let's add some other information (e.g., response metadata)
+        chunk = ChatGenerationChunk(
+            message=AIMessageChunk(content="", response_metadata={"time_in_sec": round(time_in_sec, 3)}, usage_metadata=usage_metadata)
+        )
+        if run_manager:
+            # This is optional in newer versions of LangChain
+            # The on_llm_new_token will be called automatically
+            run_manager.on_llm_new_token("", chunk=chunk)
+        yield chunk
+
 
     time_in_sec = time.time() - start_time
     # 如果循环内已经处理过usage块，此处可能不需要再生成一个重复块
