@@ -83,7 +83,7 @@ def gen_response(chain, input, chat_history):
 
 # Streamlit 应用程序界面
 def main():
-    st.markdown('### 🦜🔗 动手学大模型应用开发')
+    st.markdown('### 🦜🔗 AI Agent: 检索增强的个人知识库助手 🔗🦜 ###')
 
     # 用于跟踪对话历史
     if "messages" not in st.session_state:
