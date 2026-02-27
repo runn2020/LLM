@@ -124,21 +124,6 @@ class ZhipuaiLLM(BaseChatModel):
             run_manager.on_llm_new_token("", chunk=chunk)
         yield chunk
 
-
-    time_in_sec = time.time() - start_time
-    # 如果循环内已经处理过usage块，此处可能不需要再生成一个重复块
-    # 但为了保留usage信息，可以仅当usage_metadata不为空时生成
-    if usage_metadata:
-        chunk = ChatGenerationChunk(
-            message=AIMessageChunk(
-                content="",
-                response_metadata={"time_in_sec": round(time_in_sec, 3)},
-                usage_metadata=usage_metadata
-            )
-        )
-        if run_manager:
-            run_manager.on_llm_new_token("", chunk=chunk)
-        yield chunk
     @property
     def _llm_type(self) -> str:
         """获取此聊天模型使用的语言模型类型。"""
