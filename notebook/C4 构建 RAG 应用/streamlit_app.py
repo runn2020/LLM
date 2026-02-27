@@ -107,10 +107,22 @@ def main():
             input=prompt,
             chat_history=st.session_state.messages
         )
+        # with messages.chat_message("ai"):
+        #     output = st.write_stream(answer)
+        # st.session_state.messages.append(("ai", output))
         with messages.chat_message("ai"):
-            output = st.write_stream(answer)
-        st.session_state.messages.append(("ai", output))
-
+            output_chunks = []
+            try:
+                for chunk in answer:
+                    st.write(chunk, end="")
+                    output_chunks.append(chunk)
+                output = "".join(output_chunks)
+                status_msg = "✅ ZhipuAI API 调用成功"
+            except Exception as e:
+                output = ""
+                status_msg = f"❌ ZhipuAI API 调用失败: {e}"
+            st.write(status_msg)
+        st.session_state.messages.append(("ai", output or status_msg))
 
 if __name__ == "__main__":
     main()
