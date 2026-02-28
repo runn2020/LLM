@@ -115,9 +115,9 @@ def get_retriever():
         vectordb.persist()
         return vectordb.as_retriever()
 
-# ---------- combine_docs（与你原始的保持一致） ----------
+# ---------- combine_docs ----------
 def combine_docs(docs):
-    # docs 可能是一个 list of Documents 或者一个 dict 包含 "context"
+    
     try:
         # 如果是 dict-like 的情况
         if isinstance(docs, dict) and "context" in docs:
@@ -176,7 +176,7 @@ def get_qa_history_chain(model_name="glm-4-plus", temperature=0.0, max_tokens=10
 
 # ---------- gen_response（含检索不足回退） ----------
 def gen_response(chain, input_text, chat_history, model_name, temperature, max_tokens):
-    # 先快速判断检索结果是否充足（避免始终走 RAG 导致“不知道”）
+    # 先判断检索结果是否充足
     retriever = get_retriever()
     docs = []
     try:
@@ -191,7 +191,7 @@ def gen_response(chain, input_text, chat_history, model_name, temperature, max_t
         llm = ZhipuaiLLM(model_name=model_name, temperature=temperature, max_tokens=max_tokens)
         try:
             # 假定 ZhipuaiLLM 支持 invoke 或 __call__（与你的 zhipuai_llm 实现兼容）
-            resp = llm.invoke([SystemMessage(content="你是一个助理，请基于你的通用知识简洁回答用户问题。"),
+            resp = llm.invoke([SystemMessage(content="你是一个知识助理，请基于你的通用知识简洁回答用户问题。"),
                                HumanMessage(content=input_text)])
             if hasattr(resp, "content"):
                 yield resp.content
@@ -213,12 +213,12 @@ def gen_response(chain, input_text, chat_history, model_name, temperature, max_t
 # ---------- Streamlit UI ----------
 def main():
     st.set_page_config(page_title="RAG Chat with Upload", layout="wide")
-    st.title("🔎 检索增强的个人知识库助手 🦜")
+    st.title("🔎 基于RAG的云端个人知识库助手 🦜")
 
     # 左侧：参数与上传
     with st.sidebar:
         st.header("模型参数")
-        model_name = st.selectbox("Model", options=["glm-4.7", "glm-3.5"], index=0)
+        model_name = st.selectbox("Model", options=['GLM-4.7-FlashX',"glm-4.6V", "glm-4.7", "glm-4-plus", "glm-5",'GLM-4.5','GLM-4.5-Air'], index=0)
         temperature = st.slider("temperature", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
         max_tokens = st.number_input("max_tokens", min_value=64, max_value=4096, value=1024, step=64)
         top_p = st.slider("top_p", min_value=0.0, max_value=1.0, value=1.0, step=0.01)
