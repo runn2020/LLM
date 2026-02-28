@@ -16,7 +16,7 @@ from langchain_community.vectorstores import Chroma
 from zhipuai_llm import ZhipuaiLLM
 
 # ---------- 背景设置函数（使用仓库内静态图片 static/bg.jpg） ----------
-def set_page_background(local_path: str = "static/bg.jpg", opacity: float = 0.30):
+def set_page_background(local_path: str = "static/bg.png", opacity: float = 0.30):
     """
     使用仓库内图片作为页面背景（Base64 嵌入）。
     local_path: 相对仓库路径，例如 static/bg.jpg
