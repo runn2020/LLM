@@ -210,7 +210,7 @@ def get_qa_history_chain(model_name="glm-4-plus", temperature=0.0, max_tokens=10
     system_prompt = (
     "你是一个问答任务的助手。"
     "请优先结合检索到的上下文片段回答问题。"
-    "如果检索到的上下文为空或不足以回答问题，请基于你的通用知识回答。"
+    "如果检索到的上下文为空或不足以回答问题，请结合你的通用知识回答。"
     "保持回答简洁明了。"
         "\n\n"
         "{context}"
@@ -251,7 +251,7 @@ def gen_response(chain, input_text, chat_history, model_name, temperature, max_t
         llm = ZhipuaiLLM(model_name=model_name, temperature=temperature, max_tokens=max_tokens)
         try:
             # 假定 ZhipuaiLLM 支持 invoke 或 __call__（与你的 zhipuai_llm 实现兼容）
-            resp = llm.invoke([SystemMessage(content="你是一个知识助理，请基于你的通用知识简洁回答用户问题。"),
+            resp = llm.invoke([SystemMessage(content="你是一个知识助理，请结合你的通用知识简洁回答用户问题。"),
                                HumanMessage(content=input_text)])
             if hasattr(resp, "content"):
                 yield resp.content
