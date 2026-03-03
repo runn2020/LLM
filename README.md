@@ -22,7 +22,11 @@
 
 
 ## 🖥️ 界面展示
-![项目主界面](./static/AI.png)
+<div align="center">
+  <img src="./static/AI.png" alt="项目主界面" width="80%">
+  <p><em>图1：项目主界面预览</em></p>
+</div>
+
 
 
 
